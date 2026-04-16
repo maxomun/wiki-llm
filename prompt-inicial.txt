@@ -1,0 +1,171 @@
+# Prompt para Agente IA (Go Developer) — Proyecto `wiki-llm`
+
+## Encabezado estándar
+Genera una intervención técnica clara y ejecutable para un agente IA orientado a desarrollo en Go. El agente debe actuar con criterio de arquitectura limpia, simplicidad y preparación para crecimiento iterativo.
+
+---
+
+## Estado inicial del repositorio (CRITICO)
+
+El proyecto está **vacío** y se debe construir **desde cero**.
+
+- No existen archivos previos a conservar.
+- Debes inicializar el repositorio como base funcional mínima.
+- No asumas código preexistente.
+
+---
+
+## Objetivo de la intervención
+
+Inicializar la estructura base del proyecto `wiki-llm` en Go y dejar lista la fundación del MVP para generación de documentación Markdown a partir de OpenAPI.
+
+---
+
+## Contexto del producto
+
+`wiki-llm` automatiza documentación técnica de APIs en Markdown compatible con Wiki (Azure DevOps u otros), usando fuentes como OpenAPI, Postman y código fuente.
+
+Regla de diseño principal:
+
+- La verdad técnica la determina el sistema.
+- El LLM solo redacta/comunica en fases futuras.
+
+Por lo tanto, en esta etapa:
+
+- No se integra ningún LLM.
+- Solo se prepara arquitectura y CLI base.
+
+---
+
+## Visión de ejecución (referencia futura)
+
+Comando objetivo de uso:
+
+```bash
+wiki-llm generate api \
+  --source ./input/openapi/api-cif.yaml \
+  --output ./output/api-cif
+```
+
+Flujo esperado (no implementar ahora):
+
+1. Leer fuente OpenAPI.
+2. Extraer endpoints.
+3. Normalizar a modelo interno.
+4. Renderizar Markdown.
+5. Escribir archivos (`index.md`, `apis/<nombre>.md`).
+
+---
+
+## Alcance de esta iteración (solo bootstrap)
+
+Debes implementar únicamente:
+
+1. Estructura base del proyecto en Go.
+2. CLI mínima con comando raíz y subcomando `generate` placeholder.
+3. Paquetes internos como módulos vacíos (placeholders).
+4. `README.md` inicial con instrucciones básicas de ejecución.
+
+No implementar en esta iteración:
+
+- Parser de OpenAPI.
+- Generación real de Markdown.
+- Integración de LLM.
+- Lógica de negocio real.
+
+---
+
+## Estructura esperada
+
+```text
+wiki-llm/
+  cmd/
+    wiki-llm/
+      main.go
+  internal/
+    config/
+      doc.go
+    discoverer/
+      doc.go
+    extractor/
+      doc.go
+    normalizer/
+      doc.go
+    promptbuilder/
+      doc.go
+    renderer/
+      doc.go
+    writer/
+      doc.go
+  templates/
+  samples/
+  output/
+  docs/
+  go.mod
+  README.md
+```
+
+---
+
+## Requisitos técnicos
+
+1. Inicializar módulo Go.
+2. Crear `main.go` con:
+   - punto de entrada,
+   - logging básico,
+   - CLI mínima con subcomando `generate`.
+3. El comando `wiki-llm generate` debe responder con mensaje claro tipo `not implemented yet` (placeholder válido).
+4. Mantener implementación simple, legible y extensible.
+
+---
+
+## README inicial (mínimo requerido)
+
+Debe incluir:
+
+- Nombre del proyecto.
+- Descripción breve.
+- Objetivo del MVP.
+- Estructura de carpetas.
+- Comandos para ejecutar:
+  - `go build ./...`
+  - `go run ./cmd/wiki-llm generate`
+- Estado actual: `bootstrap inicial`.
+
+---
+
+## Criterios de aceptación
+
+- `go build ./...` ejecuta sin errores.
+- CLI responde al ejecutar `go run ./cmd/wiki-llm generate`.
+- Estructura de carpetas fue creada desde cero.
+- Todos los paquetes internos tienen archivo placeholder (`doc.go`).
+- `README.md` está presente y correctamente documentado.
+
+---
+
+## Restricciones
+
+- No agregar dependencias externas innecesarias.
+- No sobreingenierizar.
+- No implementar lógica de negocio real.
+- No integrar LLM.
+
+---
+
+## Formato de entrega obligatorio del agente
+
+Al finalizar, el agente debe reportar:
+
+1. Árbol final del proyecto.
+2. Lista de archivos creados.
+3. Comandos ejecutados para validar.
+4. Resultado de validación contra criterios de aceptación (checklist).
+
+---
+
+## Próxima iteración (no implementar ahora)
+
+- Implementar parser OpenAPI.
+- Definir modelo de dominio interno.
+- Conectar pipeline de render Markdown.

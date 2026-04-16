@@ -1,0 +1,396 @@
+components:
+    schemas:
+        api-cif_application_cliente_dto.EstadoDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        api-cif_application_cliente_dto.SegmentoDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        api-cif_application_segmento_dto.EstadoDto:
+            properties:
+                codigo:
+                    type: integer
+                detalle:
+                    type: string
+                mensaje:
+                    type: string
+            type: object
+        api-cif_application_segmento_dto.SegmentoDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        dto.ActividadEconomicaDto:
+            properties:
+                codigoCIIU:
+                    type: integer
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        dto.ClienteDto:
+            properties:
+                actividadEconomica:
+                    $ref: '#/components/schemas/dto.ActividadEconomicaDto'
+                codigoContraparte:
+                    $ref: '#/components/schemas/dto.CodigoContraparteDto'
+                composicionInstitucional:
+                    $ref: '#/components/schemas/dto.ComposicionInstitucionalDto'
+                correo:
+                    type: string
+                direccion:
+                    $ref: '#/components/schemas/dto.DireccionDto'
+                ejecutivo:
+                    $ref: '#/components/schemas/dto.EjecutivoDto'
+                estado:
+                    $ref: '#/components/schemas/api-cif_application_cliente_dto.EstadoDto'
+                fechaIngreso:
+                    type: string
+                id:
+                    type: integer
+                idDocumento:
+                    type: string
+                indicadorValidez:
+                    $ref: '#/components/schemas/dto.IndicadorValidezDto'
+                nombre:
+                    type: string
+                relacionClienteInstitucion:
+                    $ref: '#/components/schemas/dto.RelacionClienteInstitucionDto'
+                segmento:
+                    $ref: '#/components/schemas/api-cif_application_cliente_dto.SegmentoDto'
+                telefono:
+                    type: string
+                tipoDocumento:
+                    $ref: '#/components/schemas/dto.TipoDocumentoDto'
+                tipoEntidad:
+                    $ref: '#/components/schemas/dto.TipoEntidadDto'
+                tipoSociedad:
+                    $ref: '#/components/schemas/dto.TipoSociedadDto'
+            type: object
+        dto.CodigoContraparteDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        dto.ComposicionInstitucionalDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        dto.DireccionDto:
+            properties:
+                ciudad:
+                    type: string
+                comuna:
+                    type: string
+                detalle:
+                    type: string
+                region:
+                    type: string
+            type: object
+        dto.EjecutivoDto:
+            properties:
+                correo:
+                    type: string
+                nombre:
+                    type: string
+                telefono:
+                    type: string
+            type: object
+        dto.IndicadorValidezDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: string
+            type: object
+        dto.RelacionClienteInstitucionDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        dto.SegmentoResponseDto:
+            properties:
+                estado:
+                    $ref: '#/components/schemas/api-cif_application_segmento_dto.EstadoDto'
+                objeto:
+                    items:
+                        $ref: '#/components/schemas/api-cif_application_segmento_dto.SegmentoDto'
+                    type: array
+            type: object
+        dto.TipoDocumentoDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        dto.TipoEntidadDto:
+            properties:
+                descripcion:
+                    type: string
+                id:
+                    type: integer
+            type: object
+        dto.TipoSociedadDto:
+            properties:
+                descripcion:
+                    type: string
+                descripcionKYC:
+                    type: string
+                id:
+                    type: integer
+                idKYC:
+                    type: integer
+            type: object
+        dto.UpdateContactoClienteDto:
+            properties:
+                correo:
+                    type: string
+                telefono:
+                    type: string
+                usuario:
+                    type: string
+            type: object
+        shared.EstadoHttpDto:
+            properties:
+                codigo:
+                    type: integer
+                detalle:
+                    type: string
+                mensaje:
+                    type: string
+            type: object
+        shared.MensajeDto-dto_ClienteDto:
+            properties:
+                estado:
+                    $ref: '#/components/schemas/shared.EstadoHttpDto'
+                objeto:
+                    $ref: '#/components/schemas/dto.ClienteDto'
+            type: object
+        shared.MensajeDto-dto_EjecutivoDto:
+            properties:
+                estado:
+                    $ref: '#/components/schemas/shared.EstadoHttpDto'
+                objeto:
+                    $ref: '#/components/schemas/dto.EjecutivoDto'
+            type: object
+        shared.MensajeDto-string:
+            properties:
+                estado:
+                    $ref: '#/components/schemas/shared.EstadoHttpDto'
+                objeto:
+                    type: string
+            type: object
+info:
+    contact: {}
+    description: API para gestionar información de clientes
+    license:
+        name: TBD
+    title: Api CIF
+    version: 1.0.1
+openapi: 3.0.3
+paths:
+    /clientes:
+        get:
+            description: Busca un cliente basado en el RUT proporcionado
+            operationId: BuscarPorRut
+            parameters:
+                - allowEmptyValue: true
+                  description: RUT del cliente
+                  in: query
+                  name: rut
+                  schema:
+                    nullable: true
+                    type: string
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-dto_ClienteDto'
+                    description: OK
+                "204":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: No Content
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Bad Request
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Internal Server Error
+            summary: Busca cliente por RUT
+            tags:
+                - ClienteHandler
+    /clientes/{id}:
+        get:
+            description: Busca un cliente basado en el ID proporcionado
+            operationId: BuscarPorId
+            parameters:
+                - description: ID del cliente
+                  in: path
+                  name: id
+                  required: true
+                  schema:
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-dto_ClienteDto'
+                    description: OK
+                "204":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: No Content
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Bad Request
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Internal Server Error
+            summary: Busca cliente por ID
+            tags:
+                - ClienteHandler
+        patch:
+            description: Permite actualizar el teléfono y/o correo de un cliente existente
+            operationId: UpdateContactoCliente
+            parameters:
+                - description: ID del cliente
+                  in: path
+                  name: id
+                  required: true
+                  schema:
+                    type: integer
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/dto.UpdateContactoClienteDto'
+                description: Datos a actualizar
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Bad Request
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Internal Server Error
+            summary: Actualiza datos de contacto del cliente
+            tags:
+                - ClienteHandler
+    /clientes/{id}/ejecutivo:
+        get:
+            description: Devuelve nombre, correo y teléfono del ejecutivo dado el ID del cliente
+            operationId: GetEjecutivoPorCliente
+            parameters:
+                - description: ID del cliente
+                  in: path
+                  name: id
+                  required: true
+                  schema:
+                    type: integer
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-dto_EjecutivoDto'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Bad Request
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Not Found
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Internal Server Error
+            summary: Obtiene los datos del ejecutivo asociado a un cliente
+            tags:
+                - ClienteHandler
+    /segmentos:
+        get:
+            description: Devuelve los segmentos configurados en catálogo
+            operationId: GetSegmentos
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/dto.SegmentoResponseDto'
+                    description: OK
+                "500":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/shared.MensajeDto-string'
+                    description: Internal Server Error
+            summary: Obtiene el listado de segmentos
+            tags:
+                - Segmentos
+servers:
+    - url: /banco/api-cif
