@@ -1,0 +1,557 @@
+{
+  "info": {
+    "_postman_id": "7ee7aa19-b287-491a-b334-177a896509c5",
+    "name": "ZZZZ_ob_api-cliente-tef Copy",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48034115"
+  },
+  "item": [
+    {
+      "name": "APIM-DEV",
+      "item": [
+        {
+          "name": "Consulta TEF enviada",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "00bcdd3b87ff4803be7e677840446899",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "Ocp-Apim-Subscription-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "00bcdd3b87ff4803be7e677840446899",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias/enviadas/530c3676-adac-426a-b4b4-94a0a754544d",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias",
+                "enviadas",
+                "530c3676-adac-426a-b4b4-94a0a754544d"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consulta TEF recibida",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "00bcdd3b87ff4803be7e677840446899",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "Ocp-Apim-Subscription-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "00bcdd3b87ff4803be7e677840446899",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias/recibidas/e862d817-1c08-4627-86d6-3062cb6b9794",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias",
+                "recibidas",
+                "e862d817-1c08-4627-86d6-3062cb6b9794"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Insertar tef enviada",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "00bcdd3b87ff4803be7e677840446899",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "Ocp-Apim-Subscription-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "00bcdd3b87ff4803be7e677840446899",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"idTef\": \"27e7b6e1-eac6-48b1-9e45-4a34ede18a5c\",\r\n   \"origen\": {\r\n      \"codigoBanco\": \"00\",\r\n      \"tipoCuenta\": \"ctacte\",\r\n      \"cuenta\": \"400000000030\",\r\n      \"rut\": \"96937110-3\",\r\n      \"nombre\": \"Proyectum\",\r\n      \"email\": \"pedro.perez@correo.cl\"\r\n   },\r\n   \"destino\": {\r\n      \"codigoBanco\": \"14\",\r\n      \"tipoCuenta\": \"ctavst\",\r\n      \"cuenta\": \"200230202\",\r\n      \"rut\": \"12485766-K\",\r\n      \"nombre\": \"Juan Soto\",\r\n      \"email\": \"juan.soto@empresa.cl\"\r\n   },\r\n   \"monto\": \"200001\",\r\n   \"moneda\": \"CLP\",\r\n   \"comentario\": \"Pago proveedor\",\r\n   \"canal\": \"OB01\",\r\n   \"segmento\": \"pequeno\",\r\n   \"fechaHora\": \"2025-11-06T05:00:00Z\",\r\n   \"estado\": \"Rechazado\",\r\n   \"motivo\": \"La transferencia se efectuó correctamente\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias/enviadas",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias",
+                "enviadas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ejecutar transferencia",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "00bcdd3b87ff4803be7e677840446899",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "Ocp-Apim-Subscription-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "00bcdd3b87ff4803be7e677840446899",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"origen\": {\r\n    \"tipoCuenta\": \"ctacte\",\r\n    \"cuenta\": \"400000000030\",\r\n    \"rut\": \"10000-5\",\r\n    \"nombre\": \"RAFAEL GOMEZ\",\r\n    \"email\": \"prueba@test.com\"\r\n  },\r\n  \"destino\": {\r\n    \"codigoBanco\": \"99\",\r\n    \"tipoCuenta\": \"ctacte\",\r\n    \"cuenta\": \"200230202\",\r\n    \"rut\": \"12485766-K\",\r\n    \"nombre\": \"Juan Soto\",\r\n    \"email\": \"juan.soto@empresa.cl\"\r\n  },\r\n  \"monto\": \"74000\",\r\n  \"moneda\": \"CLP\",\r\n  \"comentario\": \"Pago proveedor\",\r\n  \"canal\": \"OB01\",\r\n  \"segmento\": \"pyme\"\r\n}\r\n\r\n/*\r\n{\r\n   \"origen\": {\r\n      \"tipoCuenta\": \"ctacte\",\r\n      \"cuenta\": \"400000000030\",\r\n      \"rut\": \"96937110-3\",\r\n      \"nombre\": \"Proyectum\",\r\n      \"email\": \"pedro.perez@correo.cl\"\r\n   },\r\n   \"destino\": {\r\n      \"codigoBanco\": \"14\",\r\n      \"tipoCuenta\": \"ctavst\",\r\n      \"cuenta\": \"200230202\",\r\n      \"rut\": \"12485766-K\",\r\n      \"nombre\": \"Juan Soto\",\r\n      \"email\": \"juan.soto@empresa.cl\"\r\n   },\r\n   \"monto\": \"200000\",\r\n   \"moneda\": \"CLP\",\r\n   \"comentario\": \"Pago proveedor\",\r\n   \"canal\": \"OB01\",\r\n   \"segmento\": \"pequeno\"\r\n}\r\n*/",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Insertar transferencia enviada",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "00bcdd3b87ff4803be7e677840446899",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "Ocp-Apim-Subscription-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "00bcdd3b87ff4803be7e677840446899",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"idTef\": \"22e7b6e1-eaa2-28b1-1e45-4a34ede18a5c\",\r\n   \"origen\": {\r\n      \"codigoBanco\": \"00\",\r\n      \"tipoCuenta\": \"ctacte\",\r\n      \"cuenta\": \"400000000030\",\r\n      \"rut\": \"96937110-3\",\r\n      \"nombre\": \"Proyectum\",\r\n      \"email\": \"pedro.perez@correo.cl\"\r\n   },\r\n   \"destino\": {\r\n      \"codigoBanco\": \"14\",\r\n      \"tipoCuenta\": \"ctavst\",\r\n      \"cuenta\": \"200230202\",\r\n      \"rut\": \"12485766-K\",\r\n      \"nombre\": \"Juan Soto\",\r\n      \"email\": \"juan.soto@empresa.cl\"\r\n   },\r\n   \"monto\": \"200001\",\r\n   \"moneda\": \"CLP\",\r\n   \"comentario\": \"Pago proveedor\",\r\n   \"canal\": \"OB01\",\r\n   \"segmento\": \"pequeno\",\r\n   \"fechaHora\": \"2025-11-06T05:00:00Z\",\r\n   \"estado\": \"Procesado\",\r\n   \"motivo\": \"La transferencia se efectuó correctamente\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias/enviadas",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias",
+                "enviadas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Insertar transferencia recibida",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "00bcdd3b87ff4803be7e677840446899",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "Ocp-Apim-Subscription-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "00bcdd3b87ff4803be7e677840446899",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"idTef\": \"22e7b6e1-eaa1-28b1-9e45-4a34ede18a5c\",\r\n   \"origen\": {\r\n      \"codigoBanco\": \"00\",\r\n      \"cuenta\": \"400000000030\",\r\n      \"rut\": \"96937110-3\",\r\n      \"nombre\": \"Proyectum\"\r\n   },\r\n   \"destino\": {\r\n      \"codigoBanco\": \"14\",\r\n      \"cuenta\": \"200230202\"\r\n   },\r\n   \"monto\": \"200001\",\r\n   \"moneda\": \"CLP\",\r\n   \"comentario\": \"Pago proveedor\",\r\n   \"fechaHora\": \"2025-11-06T05:00:00Z\",\r\n   \"referencia\": \"esta es una referencia\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias/recibidas",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias",
+                "recibidas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deprecado---Listar transferencias enviadas",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "00bcdd3b87ff4803be7e677840446899",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "Ocp-Apim-Subscription-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias/enviadas?origenCuenta=7641843&fechaDesde=2025-11-01&fechaHasta=2025-11-28&rutOrigen=96937110-3&tipo=Todos&estado=Procesado",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias",
+                "enviadas"
+              ],
+              "query": [
+                {
+                  "key": "origenCuenta",
+                  "value": "7641843",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "fechaDesde",
+                  "value": "2025-11-01",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "fechaHasta",
+                  "value": "2025-11-28",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "rutOrigen",
+                  "value": "96937110-3",
+                  "description": "Obligatorio"
+                },
+                {
+                  "key": "tipo",
+                  "value": "Todos",
+                  "description": "Todos|EntreCuentas|Terceros Opcional"
+                },
+                {
+                  "key": "estado",
+                  "value": "Procesado",
+                  "description": "Procesado|Rechazado Opcional"
+                },
+                {
+                  "key": "numeroPagina",
+                  "value": "1",
+                  "description": "Valor por defecto",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "registrosPorPagina",
+                  "value": "10",
+                  "description": "Valor por defecto",
+                  "type": "text",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar transferencias enviadas con filtros",
+          "request": {
+            "auth": {
+              "type": "apikey",
+              "apikey": [
+                {
+                  "key": "value",
+                  "value": "00bcdd3b87ff4803be7e677840446899",
+                  "type": "string"
+                },
+                {
+                  "key": "key",
+                  "value": "Ocp-Apim-Subscription-Key",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias/enviadas?origenCuenta=&fechaDesde=2025-01-01&fechaHasta=2025-12-30&origenRut=96667560-8&numeroPagina=1&registrosPorPagina=10&estado=&tipo=Todos&destinoCuenta=200230202&destinoCodigoBanco=00",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias",
+                "enviadas"
+              ],
+              "query": [
+                {
+                  "key": "origenCuenta",
+                  "value": ""
+                },
+                {
+                  "key": "fechaDesde",
+                  "value": "2025-01-01"
+                },
+                {
+                  "key": "fechaHasta",
+                  "value": "2025-12-30"
+                },
+                {
+                  "key": "origenRut",
+                  "value": "96667560-8"
+                },
+                {
+                  "key": "numeroPagina",
+                  "value": "1"
+                },
+                {
+                  "key": "registrosPorPagina",
+                  "value": "10"
+                },
+                {
+                  "key": "estado",
+                  "value": "",
+                  "description": "Procesado|Rechazado"
+                },
+                {
+                  "key": "tipo",
+                  "value": "Todos",
+                  "description": "Todos|EntreCuentas|Terceros"
+                },
+                {
+                  "key": "destinoCuenta",
+                  "value": "200230202"
+                },
+                {
+                  "key": "destinoCodigoBanco",
+                  "value": "00"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar transferencias recibidas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "00bcdd3b87ff4803be7e677840446899",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cliente-tef/1.0/transferencias/recibidas?destinoCuenta=5658084&fechaDesde=2025-01-01&fechaHasta=2025-12-31&destinoRut=10438357-2&numeroPagina=1&registrosPorPagina=10&tipo=EntreCuentas",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cliente-tef",
+                "1.0",
+                "transferencias",
+                "recibidas"
+              ],
+              "query": [
+                {
+                  "key": "destinoCuenta",
+                  "value": "5658084",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "fechaDesde",
+                  "value": "2025-01-01",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "fechaHasta",
+                  "value": "2025-12-31",
+                  "description": "Opcional"
+                },
+                {
+                  "key": "destinoRut",
+                  "value": "10438357-2",
+                  "description": "Obligatorio"
+                },
+                {
+                  "key": "numeroPagina",
+                  "value": "1",
+                  "description": "Valor por defecto"
+                },
+                {
+                  "key": "registrosPorPagina",
+                  "value": "10",
+                  "description": "Valor por defecto"
+                },
+                {
+                  "key": "tipo",
+                  "value": "EntreCuentas",
+                  "description": "Todos|EntreCuentas|Terceros Opcional"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -34,15 +34,19 @@ func RenderAPI(doc normalizer.APIDocument) map[string]string {
 	index.WriteString(")\n")
 	if len(sorted) > 0 {
 		index.WriteString("\n## Endpoints\n\n")
-		index.WriteString("| Metodo | Path | OperationId |\n")
-		index.WriteString("|---|---|---|\n")
+		index.WriteString("| Metodo | BasePath | Path | OperationId | Sources |\n")
+		index.WriteString("|---|---|---|---|---|\n")
 		for _, endpoint := range sorted {
 			index.WriteString("| `")
 			index.WriteString(escapeCell(endpoint.Method))
 			index.WriteString("` | `")
+			index.WriteString(escapeCell(nonEmpty(endpoint.BasePath, "/")))
+			index.WriteString("` | `")
 			index.WriteString(escapeCell(endpoint.Path))
 			index.WriteString("` | `")
 			index.WriteString(escapeCell(nonEmpty(endpoint.OperationID, "-")))
+			index.WriteString("` | `")
+			index.WriteString(escapeCell(nonEmpty(joinSources(endpoint.Sources), "-")))
 			index.WriteString("` |\n")
 		}
 	}
@@ -83,6 +87,9 @@ func RenderAPI(doc normalizer.APIDocument) map[string]string {
 			api.WriteString(endpoint.OperationID)
 			api.WriteString("`\n")
 		}
+		api.WriteString("- BasePath: `")
+		api.WriteString(nonEmpty(endpoint.BasePath, "/"))
+		api.WriteString("`\n")
 		if endpoint.Summary != "" {
 			api.WriteString("- Summary: ")
 			api.WriteString(endpoint.Summary)
@@ -104,6 +111,11 @@ func RenderAPI(doc normalizer.APIDocument) map[string]string {
 		if len(endpoint.SecurityRefs) > 0 {
 			api.WriteString("- Security: `")
 			api.WriteString(strings.Join(endpoint.SecurityRefs, "`, `"))
+			api.WriteString("`\n")
+		}
+		if len(endpoint.Sources) > 0 {
+			api.WriteString("- Sources: `")
+			api.WriteString(strings.Join(sourceStrings(endpoint.Sources), "`, `"))
 			api.WriteString("`\n")
 		}
 
@@ -251,4 +263,19 @@ func anchorForEndpoint(endpoint normalizer.Endpoint) string {
 		}
 	}
 	return strings.Trim(b.String(), "-")
+}
+
+func sourceStrings(values []normalizer.SourceType) []string {
+	out := make([]string, 0, len(values))
+	for _, v := range values {
+		out = append(out, string(v))
+	}
+	return out
+}
+
+func joinSources(values []normalizer.SourceType) string {
+	if len(values) == 0 {
+		return ""
+	}
+	return strings.Join(sourceStrings(values), ", ")
 }

@@ -38,3 +38,17 @@ func TestWriteFiles_WritesNestedArtifacts(t *testing.T) {
 		t.Fatalf("contenido api-a.md inesperado: %q", string(apiRaw))
 	}
 }
+
+func TestValidateOutputDir_FailsWhenPathIsFile(t *testing.T) {
+	t.Parallel()
+
+	tmpDir := t.TempDir()
+	filePath := filepath.Join(tmpDir, "no-dir.txt")
+	if err := os.WriteFile(filePath, []byte("x"), 0o644); err != nil {
+		t.Fatalf("crear archivo temporal: %v", err)
+	}
+
+	if err := ValidateOutputDir(filePath); err == nil {
+		t.Fatalf("se esperaba error cuando output es archivo")
+	}
+}

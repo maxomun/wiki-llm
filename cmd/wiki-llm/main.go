@@ -2,10 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/max/wiki-llm/internal/extractor"
+	"github.com/max/wiki-llm/internal/normalizer"
 	"github.com/max/wiki-llm/internal/renderer"
 	"github.com/max/wiki-llm/internal/writer"
 )
@@ -58,11 +61,13 @@ func runGenerateAPI(args []string) int {
 	fs := flag.NewFlagSet("wiki-llm generate api", flag.ContinueOnError)
 	fs.SetOutput(os.Stdout)
 
-	var source string
+	var sources stringSliceFlag
+	var sourceType string
 	var output string
 	var showHelp bool
 
-	fs.StringVar(&source, "source", "", "ruta al archivo OpenAPI")
+	fs.Var(&sources, "source", "ruta al archivo de fuente (repetible)")
+	fs.StringVar(&sourceType, "source-type", extractor.SourceTypeAuto, "tipo de fuente: auto|openapi|postman")
 	fs.StringVar(&output, "output", "", "directorio de salida")
 	fs.BoolVar(&showHelp, "h", false, "muestra ayuda")
 	fs.BoolVar(&showHelp, "help", false, "muestra ayuda")
@@ -83,26 +88,48 @@ func runGenerateAPI(args []string) int {
 		return 1
 	}
 
-	if source == "" || output == "" {
+	if len(sources) == 0 || output == "" {
 		log.Println("wiki-llm generate api: --source y --output son obligatorios")
 		printGenerateAPIHelp()
 		return 1
 	}
 
-	doc, err := extractor.ExtractOpenAPI(source)
-	if err != nil {
-		log.Printf("wiki-llm generate api: error extrayendo openapi: %v\n", err)
+	log.Println("wiki-llm generate api: validando entradas...")
+	for _, source := range sources {
+		if err := validateSourcePath(source); err != nil {
+			log.Printf("wiki-llm generate api: validacion de source fallo (%s): %v\n", source, err)
+			return 1
+		}
+	}
+	if err := writer.ValidateOutputDir(output); err != nil {
+		log.Printf("wiki-llm generate api: validacion de output fallo: %v\n", err)
 		return 1
 	}
 
-	log.Printf("wiki-llm generate api: OpenAPI cargado correctamente")
-	log.Printf("  source: %s", source)
+	log.Printf("wiki-llm generate api: extrayendo fuentes (type=%s)...", sourceType)
+	documents := make([]normalizer.APIDocument, 0, len(sources))
+	for _, source := range sources {
+		doc, err := extractor.ExtractSource(source, sourceType)
+		if err != nil {
+			log.Printf("wiki-llm generate api: error extrayendo fuente (%s): %v\n", source, err)
+			return 1
+		}
+		documents = append(documents, doc)
+	}
+	doc := normalizer.MergeDocuments(documents)
+
+	log.Printf("wiki-llm generate api: fuentes cargadas y fusionadas correctamente")
+	log.Printf("  sources: %s", strings.Join(sources, ", "))
+	log.Printf("  source-type: %s", sourceType)
 	log.Printf("  output: %s", output)
 	log.Printf("  title: %s", doc.Title)
 	log.Printf("  version: %s", doc.Version)
 	log.Printf("  endpoints extraidos: %d", len(doc.Endpoints))
 
+	log.Println("wiki-llm generate api: renderizando Markdown...")
 	files := renderer.RenderAPI(doc)
+
+	log.Println("wiki-llm generate api: escribiendo archivos...")
 	if err := writer.WriteFiles(output, files); err != nil {
 		log.Printf("wiki-llm generate api: error escribiendo salida: %v\n", err)
 		return 1
@@ -142,13 +169,46 @@ func printGenerateHelp() {
 
 func printGenerateAPIHelp() {
 	log.Println("Uso:")
-	log.Println("  wiki-llm generate api --source <archivo-openapi> --output <directorio>")
+	log.Println("  wiki-llm generate api --source <archivo-fuente> [--source <archivo-fuente> ...] --output <directorio>")
 	log.Println("")
 	log.Println("Descripcion:")
-	log.Println("  Valida el contrato CLI para la generacion de API (bootstrap).")
+	log.Println("  Genera documentacion de API desde una o multiples fuentes soportadas.")
 	log.Println("")
 	log.Println("Opciones:")
-	log.Println("  --source   Ruta al archivo OpenAPI (obligatorio)")
-	log.Println("  --output   Directorio de salida (obligatorio)")
-	log.Println("  -h, --help Muestra esta ayuda")
+	log.Println("  --source        Ruta al archivo de fuente (obligatorio, repetible)")
+	log.Println("  --source-type   auto|openapi|postman (default: auto)")
+	log.Println("  --output        Directorio de salida (obligatorio)")
+	log.Println("  -h, --help      Muestra esta ayuda")
+}
+
+type stringSliceFlag []string
+
+func (s *stringSliceFlag) String() string {
+	if s == nil {
+		return ""
+	}
+	return strings.Join(*s, ",")
+}
+
+func (s *stringSliceFlag) Set(value string) error {
+	v := strings.TrimSpace(value)
+	if v == "" {
+		return fmt.Errorf("valor vacio para --source")
+	}
+	*s = append(*s, v)
+	return nil
+}
+
+func validateSourcePath(source string) error {
+	if strings.TrimSpace(source) == "" {
+		return fmt.Errorf("ruta source vacia")
+	}
+	info, err := os.Stat(source)
+	if err != nil {
+		return fmt.Errorf("no se pudo leer source: %w", err)
+	}
+	if info.IsDir() {
+		return fmt.Errorf("source debe ser archivo, se recibio directorio: %s", source)
+	}
+	return nil
 }

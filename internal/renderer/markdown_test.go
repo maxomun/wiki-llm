@@ -47,7 +47,7 @@ func TestRenderAPI_GeneratesExpectedFiles(t *testing.T) {
 	if !ok {
 		t.Fatalf("falta index.md")
 	}
-	if !strings.Contains(index, "| Metodo | Path | OperationId |") {
+	if !strings.Contains(index, "| Metodo | BasePath | Path | OperationId | Sources |") {
 		t.Fatalf("index.md no contiene tabla de endpoints")
 	}
 

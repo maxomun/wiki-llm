@@ -1,0 +1,19 @@
+# Api CIF
+
+- Version: `1.0.1`
+- Endpoints: `5`
+- Fuente: `../../docs/openapi.yaml`
+
+## Documentacion
+
+- [Detalle de la API](apis/api-cif.md)
+
+## Endpoints
+
+| Metodo | BasePath | Path | OperationId | Sources |
+|---|---|---|---|---|
+| `GET` | `/banco/api-cif` | `/clientes` | `BuscarPorRut` | `openapi` |
+| `GET` | `/banco/api-cif` | `/clientes/{id}` | `BuscarPorId` | `openapi` |
+| `PATCH` | `/banco/api-cif` | `/clientes/{id}` | `UpdateContactoCliente` | `openapi` |
+| `GET` | `/banco/api-cif` | `/clientes/{id}/ejecutivo` | `GetEjecutivoPorCliente` | `openapi` |
+| `GET` | `/banco/api-cif` | `/segmentos` | `GetSegmentos` | `openapi` |

@@ -1,6 +1,6 @@
 # wiki-llm
 
-`wiki-llm` es una herramienta CLI en Go para generar documentacion tecnica en Markdown a partir de fuentes de API, comenzando por OpenAPI.
+`wiki-llm` es una herramienta CLI en Go para generar documentacion tecnica en Markdown a partir de multiples fuentes de API (OpenAPI y Postman Collection).
 
 ## Objetivo del MVP
 
@@ -47,6 +47,12 @@ Ejecutar tests:
 go test ./...
 ```
 
+Notas de validacion de CLI:
+
+- `--source` debe apuntar a un archivo existente.
+- `--source-type` soporta `auto`, `openapi` y `postman`.
+- `--output` debe ser un directorio valido y escribible.
+
 Ver ayuda global:
 
 ```bash
@@ -68,7 +74,22 @@ go run ./cmd/wiki-llm generate api --help
 Probar `generate api` con OpenAPI de ejemplo:
 
 ```bash
-go run ./cmd/wiki-llm generate api --source ./docs/openapi.yaml --output ./output/api-cif
+go run ./cmd/wiki-llm generate api --source ./docs/openapi.yaml --source-type openapi --output ./output/api-cif
+```
+
+Probar `generate api` con Postman Collection:
+
+```bash
+go run ./cmd/wiki-llm generate api --source ./docs/ob_api-cif.postman_collection.json --source-type postman --output ./output/postman-cif
+```
+
+Probar fusion de OpenAPI + Postman en una sola salida:
+
+```bash
+go run ./cmd/wiki-llm generate api \
+  --source ./docs/openapi.yaml \
+  --source ./docs/ob_api-cif.postman_collection.json \
+  --output ./output/unified-cif
 ```
 
 Archivos esperados en salida:

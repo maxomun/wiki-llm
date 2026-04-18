@@ -9,19 +9,36 @@ type APIDocument struct {
 	Endpoints   []Endpoint
 }
 
+// SourceType representa el origen de datos de un endpoint.
+type SourceType string
+
+const (
+	SourceOpenAPI SourceType = "openapi"
+	SourcePostman SourceType = "postman"
+)
+
+// EndpointKey define la identidad unica de un endpoint.
+type EndpointKey struct {
+	Method string
+	Path   string
+}
+
 // Endpoint representa una operacion HTTP de la API.
 type Endpoint struct {
+	BasePath     string
 	Path         string
 	Method       string
 	OperationID  string
 	Summary      string
 	Description  string
 	Tags         []string
+	PathParams   []Parameter
 	Parameters   []Parameter
 	RequestBody  *RequestBody
 	Responses    []Response
 	Deprecated   bool
 	SecurityRefs []string
+	Sources      []SourceType
 }
 
 // Parameter representa un parametro de entrada de una operacion.

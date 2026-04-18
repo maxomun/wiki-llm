@@ -15,9 +15,11 @@ Version: `1.0.1`
 ## `GET /clientes`
 
 - OperationId: `BuscarPorRut`
+- BasePath: `/banco/api-cif`
 - Summary: Busca cliente por RUT
 - Description: Busca un cliente basado en el RUT proporcionado
 - Tags: `ClienteHandler`
+- Sources: `openapi`
 
 ### Parametros
 
@@ -37,9 +39,11 @@ Version: `1.0.1`
 ## `GET /clientes/{id}`
 
 - OperationId: `BuscarPorId`
+- BasePath: `/banco/api-cif`
 - Summary: Busca cliente por ID
 - Description: Busca un cliente basado en el ID proporcionado
 - Tags: `ClienteHandler`
+- Sources: `openapi`
 
 ### Parametros
 
@@ -59,9 +63,11 @@ Version: `1.0.1`
 ## `PATCH /clientes/{id}`
 
 - OperationId: `UpdateContactoCliente`
+- BasePath: `/banco/api-cif`
 - Summary: Actualiza datos de contacto del cliente
 - Description: Permite actualizar el teléfono y/o correo de un cliente existente
 - Tags: `ClienteHandler`
+- Sources: `openapi`
 
 ### Parametros
 
@@ -88,9 +94,11 @@ Version: `1.0.1`
 ## `GET /clientes/{id}/ejecutivo`
 
 - OperationId: `GetEjecutivoPorCliente`
+- BasePath: `/banco/api-cif`
 - Summary: Obtiene los datos del ejecutivo asociado a un cliente
 - Description: Devuelve nombre, correo y teléfono del ejecutivo dado el ID del cliente
 - Tags: `ClienteHandler`
+- Sources: `openapi`
 
 ### Parametros
 
@@ -110,9 +118,11 @@ Version: `1.0.1`
 ## `GET /segmentos`
 
 - OperationId: `GetSegmentos`
+- BasePath: `/banco/api-cif`
 - Summary: Obtiene el listado de segmentos
 - Description: Devuelve los segmentos configurados en catálogo
 - Tags: `Segmentos`
+- Sources: `openapi`
 
 ### Responses
 

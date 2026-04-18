@@ -14,12 +14,17 @@ type openAPISpec struct {
 	OpenAPI string                     `yaml:"openapi"`
 	Info    openAPIInfo                `yaml:"info"`
 	Paths   map[string]openAPIPathItem `yaml:"paths"`
+	Servers []openAPIServer            `yaml:"servers"`
 }
 
 type openAPIInfo struct {
 	Title       string `yaml:"title"`
 	Version     string `yaml:"version"`
 	Description string `yaml:"description"`
+}
+
+type openAPIServer struct {
+	URL string `yaml:"url"`
 }
 
 type openAPIOperation struct {
@@ -99,6 +104,7 @@ func ExtractOpenAPI(sourcePath string) (normalizer.APIDocument, error) {
 		SourcePath:  sourcePath,
 		Endpoints:   make([]normalizer.Endpoint, 0),
 	}
+	basePath := extractBasePathFromServers(spec.Servers)
 
 	paths := sortedKeys(spec.Paths)
 	for _, path := range paths {
@@ -107,6 +113,7 @@ func ExtractOpenAPI(sourcePath string) (normalizer.APIDocument, error) {
 			method := methodOp.Method
 			op := methodOp.Operation
 			api.Endpoints = append(api.Endpoints, normalizer.Endpoint{
+				BasePath:     basePath,
 				Path:         path,
 				Method:       strings.ToUpper(method),
 				OperationID:  nonEmpty(strings.TrimSpace(op.OperationID), fallbackOperationID(method, path)),
@@ -118,6 +125,7 @@ func ExtractOpenAPI(sourcePath string) (normalizer.APIDocument, error) {
 				Responses:    mapResponses(op.Responses),
 				Deprecated:   op.Deprecated,
 				SecurityRefs: mapSecurityRefs(op.Security),
+				Sources:      []normalizer.SourceType{normalizer.SourceOpenAPI},
 			})
 		}
 	}
@@ -329,4 +337,32 @@ func nonEmpty(v, fallback string) string {
 		return fallback
 	}
 	return v
+}
+
+func extractBasePathFromServers(servers []openAPIServer) string {
+	for _, server := range servers {
+		url := strings.TrimSpace(server.URL)
+		if url == "" {
+			continue
+		}
+		if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+			if idx := strings.Index(url, "://"); idx >= 0 {
+				tmp := url[idx+3:]
+				if slash := strings.Index(tmp, "/"); slash >= 0 {
+					url = tmp[slash:]
+				} else {
+					url = "/"
+				}
+			}
+		}
+		url = strings.TrimSpace(strings.SplitN(url, "?", 2)[0])
+		if url == "" || url == "/" {
+			continue
+		}
+		if !strings.HasPrefix(url, "/") {
+			url = "/" + url
+		}
+		return url
+	}
+	return ""
 }
