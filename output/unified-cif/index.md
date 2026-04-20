@@ -1,26 +1,22 @@
-# Api CIF
+# prueba-wiki-llm
 
-- Version: `1.0.1`
-- Endpoints: `12`
-- Fuente: `./docs/openapi.yaml, ./docs/ob_api-cif.postman_collection.json`
+- Version: `unknown`
+- BasePath principal: `/banco/api-cif/1.0`
+- Fuente principal del contrato: `openapi`
+- Endpoints: `6`
+- Fuente: `/home/max/p/wiki-llm/proyectos-a-wikear/api-cif/docs/swagger.json, ./docs/prueba-wiki-llm.postman_collection.json`
 
 ## Documentacion
 
-- [Detalle de la API](apis/api-cif.md)
+- [Detalle de la API](apis/prueba-wiki-llm.md)
 
 ## Endpoints
 
 | Metodo | BasePath | Path | OperationId | Sources |
 |---|---|---|---|---|
-| `GET` | `/banco/api-cif` | `/clientes` | `BuscarPorRut` | `openapi` |
-| `GET` | `/banco/api-cif` | `/clientes/{id}` | `BuscarPorId` | `openapi` |
-| `PATCH` | `/banco/api-cif` | `/clientes/{id}` | `UpdateContactoCliente` | `openapi` |
-| `GET` | `/banco/api-cif` | `/clientes/{id}/ejecutivo` | `GetEjecutivoPorCliente` | `openapi` |
-| `GET` | `/banco/api-cif` | `/segmentos` | `GetSegmentos` | `openapi` |
-| `POST` | `/banco/api-cliente-tef/1.0` | `/transferencias` | `POST_ejecutar_transferencia` | `postman` |
-| `GET` | `/banco/api-cliente-tef/1.0` | `/transferencias/enviadas` | `GET_deprecado_listar_transferencias_enviadas` | `postman` |
-| `POST` | `/banco/api-cliente-tef/1.0` | `/transferencias/enviadas` | `POST_insertar_tef_enviada` | `postman` |
-| `GET` | `/banco/api-cliente-tef/1.0` | `/transferencias/enviadas/{id}` | `GET_consulta_tef_enviada` | `postman` |
-| `GET` | `/banco/api-cliente-tef/1.0` | `/transferencias/recibidas` | `GET_listar_transferencias_recibidas` | `postman` |
-| `POST` | `/banco/api-cliente-tef/1.0` | `/transferencias/recibidas` | `POST_insertar_transferencia_recibida` | `postman` |
-| `GET` | `/banco/api-cliente-tef/1.0` | `/transferencias/recibidas/{id}` | `GET_consulta_tef_recibida` | `postman` |
+| `GET` | `/banco/api-cif/1.0` | `/clientes` | `BuscarPorRut` | `openapi, postman, code` |
+| `GET` | `/banco/api-cif/1.0` | `/clientes/{id}` | `BuscarPorId` | `openapi, postman, code` |
+| `PATCH` | `/banco/api-cif/1.0` | `/clientes/{id}` | `UpdateContactoCliente` | `openapi, postman, code` |
+| `GET` | `/banco/api-cif/1.0` | `/clientes/{id}/ejecutivo` | `GetEjecutivoPorCliente` | `openapi, postman, code` |
+| `GET` | `/banco/api-cif/1.0` | `/health` | `GET_health` | `postman` |
+| `GET` | `/banco/api-cif/1.0` | `/segmentos` | `GetSegmentos` | `openapi, postman, code` |

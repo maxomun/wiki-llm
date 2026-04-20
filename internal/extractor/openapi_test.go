@@ -125,6 +125,41 @@ paths: {}`
 
 	_, err := ExtractOpenAPI(sourcePath)
 	if err == nil {
-		t.Fatalf("se esperaba error por falta de campo openapi")
+		t.Fatalf("se esperaba error por falta de campo openapi/swagger")
+	}
+}
+
+func TestExtractOpenAPI_Swagger20JSON(t *testing.T) {
+	t.Parallel()
+
+	spec := `{
+  "swagger": "2.0",
+  "info": {"title":"Swagger API","version":"1.0"},
+  "basePath": "/banco/api-cif/1.0",
+  "paths": {
+    "/clientes/{id}": {
+      "get": {
+        "operationId":"GetCliente",
+        "responses": {"200":{"description":"OK"}}
+      }
+    }
+  }
+}`
+
+	tmpDir := t.TempDir()
+	sourcePath := filepath.Join(tmpDir, "swagger.json")
+	if err := os.WriteFile(sourcePath, []byte(spec), 0o644); err != nil {
+		t.Fatalf("escribir swagger temporal: %v", err)
+	}
+
+	doc, err := ExtractOpenAPI(sourcePath)
+	if err != nil {
+		t.Fatalf("ExtractOpenAPI swagger error: %v", err)
+	}
+	if len(doc.Endpoints) != 1 {
+		t.Fatalf("se esperaba 1 endpoint en swagger, actual=%d", len(doc.Endpoints))
+	}
+	if doc.Endpoints[0].BasePath != "/banco/api-cif/1.0" {
+		t.Fatalf("basePath swagger inesperado: %s", doc.Endpoints[0].BasePath)
 	}
 }

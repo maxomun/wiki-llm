@@ -1,6 +1,8 @@
 # Api CIF
 
 - Version: `1.0.1`
+- BasePath principal: `/banco/api-cif`
+- Fuente principal del contrato: `openapi`
 - Endpoints: `5`
 - Fuente: `../../docs/openapi.yaml`
 

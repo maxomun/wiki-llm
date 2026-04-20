@@ -31,7 +31,8 @@ func normalizeEndpoint(endpoint Endpoint) Endpoint {
 	endpoint.Path = endpointPath
 
 	endpoint.PathParams = detectPathParams(endpoint.Path)
-	endpoint.Parameters = mergePathParams(endpoint.Parameters, endpoint.PathParams)
+	endpoint.Parameters = normalizeAndDeduplicateParameters(endpoint.Parameters, endpoint.PathParams)
+	endpoint.PathParams = syncPathParamsWithParameters(endpoint.PathParams, endpoint.Parameters)
 	endpoint.Sources = dedupeSourceTypes(endpoint.Sources)
 
 	return endpoint
@@ -147,28 +148,49 @@ func detectPathParams(path string) []Parameter {
 	return out
 }
 
-func mergePathParams(params, pathParams []Parameter) []Parameter {
-	out := make([]Parameter, len(params))
-	copy(out, params)
+func normalizeAndDeduplicateParameters(params, pathParams []Parameter) []Parameter {
+	out := make([]Parameter, 0, len(params)+len(pathParams))
+	index := make(map[string]int, len(params)+len(pathParams))
+	placeholderOrder := make([]string, 0, len(pathParams))
+	pathParamSet := make(map[string]struct{}, len(pathParams))
+	for _, pp := range pathParams {
+		placeholderOrder = append(placeholderOrder, pp.Name)
+		pathParamSet[pp.Name] = struct{}{}
+	}
+	aliasToCanonical := make(map[string]string)
+	assignedCanonical := make(map[string]struct{})
 
-	index := make(map[string]int, len(out))
-	for i, p := range out {
-		key := strings.ToLower(strings.TrimSpace(p.In)) + "|" + strings.TrimSpace(p.Name)
-		index[key] = i
+	for _, p := range params {
+		normalized := normalizeParameter(p)
+		if normalized.In == "path" {
+			normalized.Name = canonicalizePathParamName(
+				normalized.Name,
+				placeholderOrder,
+				pathParamSet,
+				aliasToCanonical,
+				assignedCanonical,
+			)
+		}
+		key := normalized.In + "|" + normalized.Name
+		if pos, ok := index[key]; ok {
+			out[pos] = mergeSingleParameter(out[pos], normalized)
+			continue
+		}
+		index[key] = len(out)
+		out = append(out, normalized)
 	}
 
+	// Garantiza que todo placeholder del path exista en lista de parametros.
 	for _, pp := range pathParams {
 		key := "path|" + pp.Name
 		if pos, ok := index[key]; ok {
+			out[pos] = mergeSingleParameter(out[pos], pp)
 			out[pos].In = "path"
 			out[pos].Required = true
-			if strings.TrimSpace(out[pos].Type) == "" {
-				out[pos].Type = pp.Type
-			}
 			continue
 		}
+		index[key] = len(out)
 		out = append(out, pp)
-		index[key] = len(out) - 1
 	}
 
 	sort.Slice(out, func(i, j int) bool {
@@ -178,6 +200,19 @@ func mergePathParams(params, pathParams []Parameter) []Parameter {
 		return out[i].In < out[j].In
 	})
 	return out
+}
+
+func syncPathParamsWithParameters(pathParams, params []Parameter) []Parameter {
+	out := make([]Parameter, 0, len(pathParams))
+	for _, pp := range pathParams {
+		for _, p := range params {
+			if strings.EqualFold(p.In, "path") && p.Name == pp.Name {
+				out = append(out, p)
+				break
+			}
+		}
+	}
+	return dedupePathParameters(out)
 }
 
 func dedupePathParameters(params []Parameter) []Parameter {
@@ -201,10 +236,85 @@ func normalizeParamName(name string) string {
 	}
 	replacer := strings.NewReplacer("-", "_", ".", "_", " ", "_")
 	name = replacer.Replace(name)
-	if name == "id_cliente" || name == "idcliente" {
-		return "id"
-	}
 	return name
+}
+
+func normalizeParameter(p Parameter) Parameter {
+	p.In = strings.ToLower(strings.TrimSpace(p.In))
+	p.Name = normalizeParamName(p.Name)
+	p.Description = strings.TrimSpace(p.Description)
+	p.SchemaRef = strings.TrimSpace(p.SchemaRef)
+	p.Type = strings.TrimSpace(p.Type)
+	p.Format = strings.TrimSpace(p.Format)
+	p.Example = strings.TrimSpace(p.Example)
+
+	if p.In == "path" {
+		p.Required = true
+		if strings.TrimSpace(p.Type) == "" {
+			p.Type = "string"
+		}
+	}
+	return p
+}
+
+func canonicalizePathParamName(
+	name string,
+	placeholderOrder []string,
+	pathParamSet map[string]struct{},
+	aliasToCanonical map[string]string,
+	assignedCanonical map[string]struct{},
+) string {
+	if _, ok := pathParamSet[name]; ok {
+		assignedCanonical[name] = struct{}{}
+		return name
+	}
+	if mapped, ok := aliasToCanonical[name]; ok {
+		assignedCanonical[mapped] = struct{}{}
+		return mapped
+	}
+
+	// Estrategia estructural:
+	// - si hay un unico placeholder en path, cualquier alias de path se mapea a ese.
+	// - si hay multiples placeholders, se asignan en orden de aparicion a placeholders disponibles.
+	if len(placeholderOrder) == 1 {
+		canonical := placeholderOrder[0]
+		aliasToCanonical[name] = canonical
+		assignedCanonical[canonical] = struct{}{}
+		return canonical
+	}
+	if len(placeholderOrder) > 1 {
+		for _, candidate := range placeholderOrder {
+			if _, used := assignedCanonical[candidate]; used {
+				continue
+			}
+			aliasToCanonical[name] = candidate
+			assignedCanonical[candidate] = struct{}{}
+			return candidate
+		}
+	}
+
+	// Si no hay placeholders estructurales (caso borde), conservar nombre normalizado.
+	return name
+}
+
+func mergeSingleParameter(base, incoming Parameter) Parameter {
+	base.Required = base.Required || incoming.Required
+	if base.Description == "" {
+		base.Description = incoming.Description
+	}
+	if base.SchemaRef == "" {
+		base.SchemaRef = incoming.SchemaRef
+	}
+	if base.Type == "" {
+		base.Type = incoming.Type
+	}
+	if base.Format == "" {
+		base.Format = incoming.Format
+	}
+	if base.Example == "" {
+		base.Example = incoming.Example
+	}
+	return base
 }
 
 func normalizeBasePath(path string) string {

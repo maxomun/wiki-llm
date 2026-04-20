@@ -10,9 +10,9 @@ import (
 func TestRunGenerateAPI_MissingRequiredFlags(t *testing.T) {
 	t.Parallel()
 
-	exitCode := run([]string{"generate", "api"})
+	exitCode := run([]string{"generate", "api", "--output", "./output"})
 	if exitCode == 0 {
-		t.Fatalf("se esperaba exit code != 0 cuando faltan flags obligatorios")
+		t.Fatalf("se esperaba exit code != 0 cuando faltan --source/--code")
 	}
 }
 
@@ -208,5 +208,49 @@ paths:
 	content := string(raw)
 	if !strings.Contains(content, "## `GET /health`") || !strings.Contains(content, "## `GET /ready`") {
 		t.Fatalf("el markdown fusionado no contiene endpoints de ambas fuentes")
+	}
+}
+
+func TestRunGenerateAPI_CodeOnlyFindsSwagger(t *testing.T) {
+	t.Parallel()
+
+	tmpDir := t.TempDir()
+	docsDir := filepath.Join(tmpDir, "docs")
+	if err := os.MkdirAll(docsDir, 0o755); err != nil {
+		t.Fatalf("crear docs dir: %v", err)
+	}
+	swagger := `{
+  "swagger": "2.0",
+  "info": {
+    "title": "Code API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}`
+	if err := os.WriteFile(filepath.Join(docsDir, "swagger.json"), []byte(swagger), 0o644); err != nil {
+		t.Fatalf("crear swagger: %v", err)
+	}
+
+	outputPath := filepath.Join(tmpDir, "out")
+	exitCode := run([]string{
+		"generate", "api",
+		"--code", tmpDir,
+		"--output", outputPath,
+	})
+	if exitCode != 0 {
+		t.Fatalf("se esperaba exit code 0 en modo solo code, actual=%d", exitCode)
+	}
+	if _, err := os.Stat(filepath.Join(outputPath, "index.md")); err != nil {
+		t.Fatalf("se esperaba index.md generado: %v", err)
 	}
 }

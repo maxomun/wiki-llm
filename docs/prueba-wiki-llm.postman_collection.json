@@ -1,0 +1,255 @@
+{
+  "info": {
+    "_postman_id": "f6ba45c5-527d-4f7c-b2b1-c6f0faf361d0",
+    "name": "prueba-wiki-llm",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "48034115"
+  },
+  "item": [
+    {
+      "name": "APIM DEV Copy",
+      "item": [
+        {
+          "name": "Modificar contacto clientes",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "8793d093db1c4808b95318c1290031ed",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"usuario\": \"\",\r\n    \"telefono\": \"44444444\",\r\n    \"correo\": \"test@t.com\"\r\n}\r\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cif/1.0/clientes/:id_cliente",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cif",
+                "1.0",
+                "clientes",
+                ":id_cliente"
+              ],
+              "variable": [
+                {
+                  "key": "id_cliente",
+                  "value": "594957",
+                  "description": "ID del cliente"
+                }
+              ]
+            },
+            "description": "Devuelve una lista de productos del cliente con preferencias."
+          },
+          "response": []
+        },
+        {
+          "name": "Consulta clientes por RUT clientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "8793d093db1c4808b95318c1290031ed"
+              }
+            ],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cif/1.0/clientes?rut={{rutUsuario}}",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cif",
+                "1.0",
+                "clientes"
+              ],
+              "query": [
+                {
+                  "key": "rut",
+                  "value": "{{rutUsuario}}",
+                  "description": "RUT del usuario (requerido)"
+                }
+              ]
+            },
+            "description": "Devuelve una lista de productos del cliente con preferencias."
+          },
+          "response": []
+        },
+        {
+          "name": "Consulta clientes por ID clientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "8793d093db1c4808b95318c1290031ed"
+              }
+            ],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cif/1.0/clientes/:id_cliente",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cif",
+                "1.0",
+                "clientes",
+                ":id_cliente"
+              ],
+              "variable": [
+                {
+                  "key": "id_cliente",
+                  "value": "751714",
+                  "description": "ID del cliente"
+                }
+              ]
+            },
+            "description": "Devuelve una lista de productos del cliente con preferencias."
+          },
+          "response": []
+        },
+        {
+          "name": "Consulta de datos del ejecutivo de un cliente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "8793d093db1c4808b95318c1290031ed"
+              }
+            ],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cif/1.0/clientes/:id_cliente/ejecutivo",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cif",
+                "1.0",
+                "clientes",
+                ":id_cliente",
+                "ejecutivo"
+              ],
+              "variable": [
+                {
+                  "key": "id_cliente",
+                  "value": "751714",
+                  "description": "ID del cliente"
+                }
+              ]
+            },
+            "description": "Devuelve una lista de productos del cliente con preferencias."
+          },
+          "response": []
+        },
+        {
+          "name": "Consulta de segmentos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "8793d093db1c4808b95318c1290031ed"
+              }
+            ],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cif/1.0/segmentos",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cif",
+                "1.0",
+                "segmentos"
+              ]
+            },
+            "description": "Devuelve una lista de productos del cliente con preferencias."
+          },
+          "response": []
+        },
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Ocp-Apim-Subscription-Key",
+                "value": "8793d093db1c4808b95318c1290031ed"
+              }
+            ],
+            "url": {
+              "raw": "https://apim-svc-sdev-westus.azure-api.net/banco/api-cif/1.0/health",
+              "protocol": "https",
+              "host": [
+                "apim-svc-sdev-westus",
+                "azure-api",
+                "net"
+              ],
+              "path": [
+                "banco",
+                "api-cif",
+                "1.0",
+                "health"
+              ]
+            },
+            "description": "Indicador de salud del servicio."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -11,10 +11,12 @@ import (
 )
 
 type openAPISpec struct {
-	OpenAPI string                     `yaml:"openapi"`
-	Info    openAPIInfo                `yaml:"info"`
-	Paths   map[string]openAPIPathItem `yaml:"paths"`
-	Servers []openAPIServer            `yaml:"servers"`
+	OpenAPI  string                     `yaml:"openapi"`
+	Swagger  string                     `yaml:"swagger"`
+	Info     openAPIInfo                `yaml:"info"`
+	Paths    map[string]openAPIPathItem `yaml:"paths"`
+	Servers  []openAPIServer            `yaml:"servers"`
+	BasePath string                     `yaml:"basePath"`
 }
 
 type openAPIInfo struct {
@@ -93,18 +95,20 @@ func ExtractOpenAPI(sourcePath string) (normalizer.APIDocument, error) {
 		return normalizer.APIDocument{}, fmt.Errorf("parsear openapi yaml/json: %w", err)
 	}
 
-	if spec.OpenAPI == "" {
-		return normalizer.APIDocument{}, fmt.Errorf("documento invalido: falta campo openapi")
+	if strings.TrimSpace(spec.OpenAPI) == "" && strings.TrimSpace(spec.Swagger) == "" {
+		return normalizer.APIDocument{}, fmt.Errorf("documento invalido: falta campo openapi/swagger")
 	}
 
 	api := normalizer.APIDocument{
-		Title:       strings.TrimSpace(spec.Info.Title),
-		Version:     strings.TrimSpace(spec.Info.Version),
-		Description: strings.TrimSpace(spec.Info.Description),
-		SourcePath:  sourcePath,
-		Endpoints:   make([]normalizer.Endpoint, 0),
+		Title:          strings.TrimSpace(spec.Info.Title),
+		Version:        strings.TrimSpace(spec.Info.Version),
+		Description:    strings.TrimSpace(spec.Info.Description),
+		SourcePath:     sourcePath,
+		Endpoints:      make([]normalizer.Endpoint, 0),
+		ContractSource: normalizer.SourceOpenAPI,
 	}
-	basePath := extractBasePathFromServers(spec.Servers)
+	basePath := extractBasePath(spec.Servers, spec.BasePath)
+	api.BasePath = basePath
 
 	paths := sortedKeys(spec.Paths)
 	for _, path := range paths {
@@ -339,7 +343,7 @@ func nonEmpty(v, fallback string) string {
 	return v
 }
 
-func extractBasePathFromServers(servers []openAPIServer) string {
+func extractBasePath(servers []openAPIServer, fallback string) string {
 	for _, server := range servers {
 		url := strings.TrimSpace(server.URL)
 		if url == "" {
@@ -364,5 +368,12 @@ func extractBasePathFromServers(servers []openAPIServer) string {
 		}
 		return url
 	}
-	return ""
+	fallback = strings.TrimSpace(fallback)
+	if fallback == "" || fallback == "/" {
+		return ""
+	}
+	if !strings.HasPrefix(fallback, "/") {
+		fallback = "/" + fallback
+	}
+	return fallback
 }

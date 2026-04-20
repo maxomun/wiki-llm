@@ -4,6 +4,10 @@ API para gestionar información de clientes
 
 Version: `1.0.1`
 
+BasePath principal: `/banco/api-cif`
+
+Fuente principal del contrato: `openapi`
+
 ## Tabla de contenidos
 
 - [GET /clientes](#get-clientes)

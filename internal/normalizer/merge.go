@@ -1,6 +1,9 @@
 package normalizer
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // MergeDocuments fusiona multiples documentos normalizados en uno solo.
 // La prioridad se resuelve por orden de entrada: los primeros documentos
@@ -16,11 +19,13 @@ func MergeDocuments(docs []APIDocument) APIDocument {
 	}
 
 	merged := APIDocument{
-		Title:       docs[0].Title,
-		Version:     docs[0].Version,
-		Description: docs[0].Description,
-		SourcePath:  docs[0].SourcePath,
-		Endpoints:   make([]Endpoint, 0),
+		Title:          docs[0].Title,
+		Version:        docs[0].Version,
+		Description:    docs[0].Description,
+		BasePath:       docs[0].BasePath,
+		ContractSource: docs[0].ContractSource,
+		SourcePath:     docs[0].SourcePath,
+		Endpoints:      make([]Endpoint, 0),
 	}
 
 	index := make(map[EndpointKey]int)
@@ -31,7 +36,8 @@ func MergeDocuments(docs []APIDocument) APIDocument {
 		merged.SourcePath = appendSourcePath(merged.SourcePath, doc.SourcePath)
 
 		for _, endpoint := range doc.Endpoints {
-			key := EndpointKey{Method: strings.ToUpper(endpoint.Method), Path: endpoint.Path}
+			endpoint = ensureEndpointSource(endpoint, doc.ContractSource)
+			key := endpointMergeKey(endpoint)
 			if pos, ok := index[key]; ok {
 				merged.Endpoints[pos] = mergeEndpointBySourcePriority(merged.Endpoints[pos], endpoint)
 				continue
@@ -41,7 +47,32 @@ func MergeDocuments(docs []APIDocument) APIDocument {
 		}
 	}
 
-	return merged
+	return ApplyEndpointConfidence(consolidateGlobalMetadata(normalizedDocs, merged))
+}
+
+func ensureEndpointSource(endpoint Endpoint, fallback SourceType) Endpoint {
+	if len(endpoint.Sources) > 0 || strings.TrimSpace(string(fallback)) == "" {
+		return endpoint
+	}
+	endpoint.Sources = []SourceType{fallback}
+	return endpoint
+}
+
+var endpointPlaceholderRe = regexp.MustCompile(`\{[^/]+\}`)
+
+func endpointMergeKey(endpoint Endpoint) EndpointKey {
+	return EndpointKey{
+		Method: strings.ToUpper(strings.TrimSpace(endpoint.Method)),
+		Path:   endpointPathSignature(endpoint.Path),
+	}
+}
+
+func endpointPathSignature(path string) string {
+	p := strings.TrimSpace(path)
+	if p == "" {
+		return "/"
+	}
+	return endpointPlaceholderRe.ReplaceAllString(p, "{}")
 }
 
 func mergeEndpointBySourcePriority(existing, incoming Endpoint) Endpoint {
@@ -60,10 +91,15 @@ func mergeEndpointBySourcePriority(existing, incoming Endpoint) Endpoint {
 }
 
 func mergeEndpoint(base, incoming Endpoint) Endpoint {
+	incomingHasPostman := containsSource(incoming.Sources, SourcePostman)
+
+	// Contract fields: base already representa la fuente prioritaria.
 	base.BasePath = firstNonEmpty(base.BasePath, incoming.BasePath)
 	base.Path = firstNonEmpty(base.Path, incoming.Path)
 	base.Method = firstNonEmpty(base.Method, incoming.Method)
 	base.OperationID = firstNonEmpty(base.OperationID, incoming.OperationID)
+
+	// Text fields: OpenAPI como base, Postman solo complementa.
 	base.Summary = firstNonEmpty(base.Summary, incoming.Summary)
 	base.Description = firstNonEmpty(base.Description, incoming.Description)
 	base.Tags = dedupeStrings(append(base.Tags, incoming.Tags...))
@@ -73,26 +109,31 @@ func mergeEndpoint(base, incoming Endpoint) Endpoint {
 
 	base.PathParams = mergeParameters(base.PathParams, incoming.PathParams)
 	base.Parameters = mergeParameters(base.Parameters, incoming.Parameters)
-	base.Responses = mergeResponses(base.Responses, incoming.Responses)
-	if base.RequestBody == nil {
-		base.RequestBody = incoming.RequestBody
-	} else if incoming.RequestBody != nil {
-		base.RequestBody.Required = base.RequestBody.Required || incoming.RequestBody.Required
-		base.RequestBody.Description = firstNonEmpty(base.RequestBody.Description, incoming.RequestBody.Description)
-		base.RequestBody.SchemaRef = firstNonEmpty(base.RequestBody.SchemaRef, incoming.RequestBody.SchemaRef)
-		base.RequestBody.ContentTypes = dedupeStrings(append(base.RequestBody.ContentTypes, incoming.RequestBody.ContentTypes...))
+	base.RequestBody = mergeRequestBody(base.RequestBody, incoming.RequestBody, incomingHasPostman)
+	base.Responses = mergeResponses(base.Responses, incoming.Responses, incomingHasPostman)
+
+	// Re-normalizar despues del merge evita duplicados de params path
+	// cuando las fuentes usan placeholders distintos (ej: {id} vs {id_cliente}).
+	return normalizeEndpoint(base)
+}
+
+func mergeRequestBody(base, incoming *RequestBody, incomingHasPostman bool) *RequestBody {
+	if base == nil {
+		return incoming
+	}
+	if incoming == nil {
+		return base
 	}
 
-	// Si Postman trae body real, enriquece descripcion/content-types aunque exista body en OpenAPI.
-	if containsSource(incoming.Sources, SourcePostman) && incoming.RequestBody != nil {
-		if base.RequestBody == nil {
-			base.RequestBody = incoming.RequestBody
-		} else {
-			base.RequestBody.Description = firstNonEmpty(incoming.RequestBody.Description, base.RequestBody.Description)
-			base.RequestBody.ContentTypes = dedupeStrings(append(base.RequestBody.ContentTypes, incoming.RequestBody.ContentTypes...))
-		}
-	}
+	base.Required = base.Required || incoming.Required
+	base.Description = firstNonEmpty(base.Description, incoming.Description)
+	base.SchemaRef = firstNonEmpty(base.SchemaRef, incoming.SchemaRef)
+	base.ContentTypes = dedupeStrings(append(base.ContentTypes, incoming.ContentTypes...))
 
+	// Ejemplos desde Postman enriquecen request body sin redefinir estructura.
+	if incomingHasPostman {
+		base.Example = firstNonEmpty(base.Example, incoming.Example)
+	}
 	return base
 }
 
@@ -129,7 +170,7 @@ func containsSource(values []SourceType, wanted SourceType) bool {
 	return false
 }
 
-func mergeResponses(base, incoming []Response) []Response {
+func mergeResponses(base, incoming []Response, incomingHasPostman bool) []Response {
 	out := make([]Response, len(base))
 	copy(out, base)
 	index := make(map[string]int, len(out))
@@ -141,6 +182,9 @@ func mergeResponses(base, incoming []Response) []Response {
 			out[pos].Description = firstNonEmpty(out[pos].Description, r.Description)
 			out[pos].SchemaRef = firstNonEmpty(out[pos].SchemaRef, r.SchemaRef)
 			out[pos].ContentTypes = dedupeStrings(append(out[pos].ContentTypes, r.ContentTypes...))
+			if incomingHasPostman {
+				out[pos].Example = firstNonEmpty(out[pos].Example, r.Example)
+			}
 			continue
 		}
 		index[r.StatusCode] = len(out)
@@ -191,4 +235,115 @@ func firstNonEmpty(base, incoming string) string {
 		return base
 	}
 	return strings.TrimSpace(incoming)
+}
+
+func consolidateGlobalMetadata(sources []APIDocument, merged APIDocument) APIDocument {
+	openapiDocs := filterDocumentsBySource(sources, SourceOpenAPI)
+	postmanDocs := filterDocumentsBySource(sources, SourcePostman)
+
+	merged.Title = pickMetadataValue(
+		collectValues(openapiDocs, func(d APIDocument) string { return d.Title }),
+		collectValues(postmanDocs, func(d APIDocument) string { return d.Title }),
+		[]string{merged.Title},
+		[]string{"api"},
+	)
+
+	merged.Version = pickMetadataValue(
+		collectValues(openapiDocs, func(d APIDocument) string { return d.Version }),
+		collectValues(postmanDocs, func(d APIDocument) string { return d.Version }),
+		[]string{merged.Version},
+		[]string{"unknown"},
+	)
+
+	merged.BasePath = consolidateBasePath(openapiDocs, merged.Endpoints)
+	merged.ContractSource = pickContractSource(openapiDocs, postmanDocs)
+
+	return merged
+}
+
+func filterDocumentsBySource(docs []APIDocument, source SourceType) []APIDocument {
+	out := make([]APIDocument, 0, len(docs))
+	for _, doc := range docs {
+		if doc.ContractSource == source {
+			out = append(out, doc)
+			continue
+		}
+		if source == SourceOpenAPI && containsAnyEndpointSource(doc.Endpoints, SourceOpenAPI) {
+			out = append(out, doc)
+		}
+		if source == SourcePostman && containsAnyEndpointSource(doc.Endpoints, SourcePostman) {
+			out = append(out, doc)
+		}
+	}
+	return out
+}
+
+func containsAnyEndpointSource(endpoints []Endpoint, source SourceType) bool {
+	for _, ep := range endpoints {
+		if containsSource(ep.Sources, source) {
+			return true
+		}
+	}
+	return false
+}
+
+func collectValues(docs []APIDocument, getter func(APIDocument) string) []string {
+	out := make([]string, 0, len(docs))
+	for _, doc := range docs {
+		out = append(out, getter(doc))
+	}
+	return out
+}
+
+func pickMetadataValue(groups ...[]string) string {
+	for _, group := range groups {
+		for _, v := range group {
+			clean := strings.TrimSpace(v)
+			if clean == "" {
+				continue
+			}
+			if strings.EqualFold(clean, "postman") {
+				continue
+			}
+			return clean
+		}
+	}
+	return ""
+}
+
+func consolidateBasePath(openapiDocs []APIDocument, endpoints []Endpoint) string {
+	for _, doc := range openapiDocs {
+		if strings.TrimSpace(doc.BasePath) != "" {
+			return strings.TrimSpace(doc.BasePath)
+		}
+	}
+
+	counts := make(map[string]int)
+	topPath := ""
+	topCount := 0
+	for _, endpoint := range endpoints {
+		base := strings.TrimSpace(endpoint.BasePath)
+		if base == "" {
+			continue
+		}
+		counts[base]++
+		if counts[base] > topCount {
+			topCount = counts[base]
+			topPath = base
+		}
+	}
+	if topPath != "" {
+		return topPath
+	}
+	return "/"
+}
+
+func pickContractSource(openapiDocs, postmanDocs []APIDocument) SourceType {
+	if len(openapiDocs) > 0 {
+		return SourceOpenAPI
+	}
+	if len(postmanDocs) > 0 {
+		return SourcePostman
+	}
+	return SourceCode
 }

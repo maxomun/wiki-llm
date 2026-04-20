@@ -58,3 +58,58 @@ func TestNormalizeDocument_SplitsBasePath(t *testing.T) {
 		t.Fatalf("path inesperado: %s", ep.Path)
 	}
 }
+
+func TestNormalizeDocument_DeduplicatesEquivalentPathParams(t *testing.T) {
+	t.Parallel()
+
+	doc := APIDocument{
+		Endpoints: []Endpoint{
+			{
+				Method: "GET",
+				Path:   "/clientes/{id}",
+				Parameters: []Parameter{
+					{Name: "id", In: "path", Required: true, Type: "string"},
+					{Name: "id_cliente", In: "path", Required: true, Description: "ID del cliente"},
+				},
+			},
+		},
+	}
+
+	out := NormalizeDocument(doc)
+	params := out.Endpoints[0].Parameters
+	if len(params) != 1 {
+		t.Fatalf("se esperaba 1 parametro path deduplicado, actual=%d", len(params))
+	}
+	if params[0].Name != "id" {
+		t.Fatalf("nombre path param inesperado: %s", params[0].Name)
+	}
+	if params[0].Description == "" {
+		t.Fatalf("se esperaba conservar descripcion al deduplicar")
+	}
+}
+
+func TestNormalizeDocument_CanonicalizesPathParamsByPathStructure(t *testing.T) {
+	t.Parallel()
+
+	doc := APIDocument{
+		Endpoints: []Endpoint{
+			{
+				Method: "GET",
+				Path:   "/clientes/{clienteid}/cuentas/{cuentaid}",
+				Parameters: []Parameter{
+					{Name: "id_cliente", In: "path", Required: true},
+					{Name: "id_cuenta", In: "path", Required: true},
+				},
+			},
+		},
+	}
+
+	out := NormalizeDocument(doc)
+	params := out.Endpoints[0].Parameters
+	if len(params) != 2 {
+		t.Fatalf("se esperaban 2 params path, actual=%d", len(params))
+	}
+	if params[0].Name != "clienteid" || params[1].Name != "cuentaid" {
+		t.Fatalf("parametros no alineados al path consolidado: %+v", params)
+	}
+}

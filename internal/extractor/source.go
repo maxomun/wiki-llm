@@ -55,7 +55,7 @@ func DetectSourceType(sourcePath string) (string, error) {
 		if strings.Contains(content, "schema.getpostman.com/json/collection") {
 			return SourceTypePostman, nil
 		}
-		if strings.Contains(content, "\"openapi\"") {
+		if strings.Contains(content, "\"openapi\"") || strings.Contains(content, "\"swagger\"") {
 			return SourceTypeOpenAPI, nil
 		}
 		return "", fmt.Errorf("no se pudo detectar tipo de source para archivo json")

@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/max/wiki-llm/internal/discoverer"
 	"github.com/max/wiki-llm/internal/extractor"
 	"github.com/max/wiki-llm/internal/normalizer"
 	"github.com/max/wiki-llm/internal/renderer"
+	"github.com/max/wiki-llm/internal/sourcecode"
 	"github.com/max/wiki-llm/internal/writer"
 )
 
@@ -63,11 +66,13 @@ func runGenerateAPI(args []string) int {
 
 	var sources stringSliceFlag
 	var sourceType string
+	var codePath string
 	var output string
 	var showHelp bool
 
 	fs.Var(&sources, "source", "ruta al archivo de fuente (repetible)")
 	fs.StringVar(&sourceType, "source-type", extractor.SourceTypeAuto, "tipo de fuente: auto|openapi|postman")
+	fs.StringVar(&codePath, "code", "", "ruta raiz del proyecto API para descubrir swagger.json")
 	fs.StringVar(&output, "output", "", "directorio de salida")
 	fs.BoolVar(&showHelp, "h", false, "muestra ayuda")
 	fs.BoolVar(&showHelp, "help", false, "muestra ayuda")
@@ -88,16 +93,24 @@ func runGenerateAPI(args []string) int {
 		return 1
 	}
 
-	if len(sources) == 0 || output == "" {
-		log.Println("wiki-llm generate api: --source y --output son obligatorios")
+	if output == "" {
+		log.Println("wiki-llm generate api: --output es obligatorio")
 		printGenerateAPIHelp()
 		return 1
 	}
 
 	log.Println("wiki-llm generate api: validando entradas...")
-	for _, source := range sources {
-		if err := validateSourcePath(source); err != nil {
-			log.Printf("wiki-llm generate api: validacion de source fallo (%s): %v\n", source, err)
+	resolvedSources, discoveryLogs, err := discoverer.ResolveGenerateAPISources(codePath, sources, sourceType)
+	if err != nil {
+		log.Printf("wiki-llm generate api: error resolviendo fuentes: %v\n", err)
+		return 1
+	}
+	for _, line := range discoveryLogs {
+		log.Printf("wiki-llm generate api: %s", line)
+	}
+	for _, source := range resolvedSources {
+		if err := validateSourcePath(source.Path); err != nil {
+			log.Printf("wiki-llm generate api: validacion de source fallo (%s): %v\n", source.Path, err)
 			return 1
 		}
 	}
@@ -107,20 +120,37 @@ func runGenerateAPI(args []string) int {
 	}
 
 	log.Printf("wiki-llm generate api: extrayendo fuentes (type=%s)...", sourceType)
-	documents := make([]normalizer.APIDocument, 0, len(sources))
-	for _, source := range sources {
-		doc, err := extractor.ExtractSource(source, sourceType)
+	documents := make([]normalizer.APIDocument, 0, len(resolvedSources))
+	sourcePaths := make([]string, 0, len(resolvedSources))
+	for _, source := range resolvedSources {
+		doc, err := extractor.ExtractSource(source.Path, source.SourceType)
 		if err != nil {
-			log.Printf("wiki-llm generate api: error extrayendo fuente (%s): %v\n", source, err)
+			log.Printf("wiki-llm generate api: error extrayendo fuente (%s): %v\n", source.Path, err)
 			return 1
 		}
 		documents = append(documents, doc)
+		sourcePaths = append(sourcePaths, source.Path)
 	}
 	doc := normalizer.MergeDocuments(documents)
+	doc.Title = resolveDocumentTitle(doc, codePath)
+
+	if strings.TrimSpace(codePath) != "" {
+		log.Println("wiki-llm generate api: analizando codigo fuente para enriquecer endpoints...")
+		enriched, err := sourcecode.EnrichDocument(doc, codePath)
+		if err != nil {
+			log.Printf("wiki-llm generate api: error analizando codigo fuente: %v\n", err)
+			return 1
+		}
+		doc = enriched
+	}
+	doc = normalizer.ApplyEndpointConfidence(doc)
 
 	log.Printf("wiki-llm generate api: fuentes cargadas y fusionadas correctamente")
-	log.Printf("  sources: %s", strings.Join(sources, ", "))
+	log.Printf("  sources: %s", strings.Join(sourcePaths, ", "))
 	log.Printf("  source-type: %s", sourceType)
+	if strings.TrimSpace(codePath) != "" {
+		log.Printf("  code: %s", codePath)
+	}
 	log.Printf("  output: %s", output)
 	log.Printf("  title: %s", doc.Title)
 	log.Printf("  version: %s", doc.Version)
@@ -175,8 +205,9 @@ func printGenerateAPIHelp() {
 	log.Println("  Genera documentacion de API desde una o multiples fuentes soportadas.")
 	log.Println("")
 	log.Println("Opciones:")
-	log.Println("  --source        Ruta al archivo de fuente (obligatorio, repetible)")
+	log.Println("  --source        Ruta al archivo de fuente (opcional, repetible)")
 	log.Println("  --source-type   auto|openapi|postman (default: auto)")
+	log.Println("  --code          Ruta raiz de proyecto para buscar swagger.json recursivamente")
 	log.Println("  --output        Directorio de salida (obligatorio)")
 	log.Println("  -h, --help      Muestra esta ayuda")
 }
@@ -211,4 +242,20 @@ func validateSourcePath(source string) error {
 		return fmt.Errorf("source debe ser archivo, se recibio directorio: %s", source)
 	}
 	return nil
+}
+
+func resolveDocumentTitle(doc normalizer.APIDocument, codePath string) string {
+	title := strings.TrimSpace(doc.Title)
+	if strings.TrimSpace(codePath) == "" {
+		return title
+	}
+
+	// Solo fallback si el titulo final no fue consolidado.
+	if title == "" {
+		fallback := strings.TrimSpace(filepath.Base(strings.TrimRight(codePath, "/")))
+		if fallback != "" {
+			return fallback
+		}
+	}
+	return title
 }

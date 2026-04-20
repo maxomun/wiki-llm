@@ -18,6 +18,7 @@ type postmanCollection struct {
 type postmanInfo struct {
 	Name        string `json:"name"`
 	Description any    `json:"description"`
+	Version     any    `json:"version"`
 }
 
 type postmanItem struct {
@@ -44,6 +45,7 @@ type postmanHeader struct {
 
 type postmanBody struct {
 	Mode    string         `json:"mode"`
+	Raw     string         `json:"raw"`
 	Options map[string]any `json:"options"`
 }
 
@@ -69,6 +71,7 @@ type postmanResp struct {
 	Code   int             `json:"code"`
 	Status string          `json:"status"`
 	Header []postmanHeader `json:"header"`
+	Body   string          `json:"body"`
 }
 
 // ExtractPostmanCollection extrae un APIDocument desde una coleccion Postman v2.1.
@@ -87,11 +90,12 @@ func ExtractPostmanCollection(sourcePath string) (normalizer.APIDocument, error)
 	}
 
 	doc := normalizer.APIDocument{
-		Title:       strings.TrimSpace(collection.Info.Name),
-		Description: strings.TrimSpace(normalizeAny(collection.Info.Description)),
-		Version:     "postman",
-		SourcePath:  sourcePath,
-		Endpoints:   make([]normalizer.Endpoint, 0),
+		Title:          strings.TrimSpace(collection.Info.Name),
+		Description:    strings.TrimSpace(normalizeAny(collection.Info.Description)),
+		Version:        normalizeUsefulVersion(normalizeAny(collection.Info.Version)),
+		SourcePath:     sourcePath,
+		Endpoints:      make([]normalizer.Endpoint, 0),
+		ContractSource: normalizer.SourcePostman,
 	}
 
 	unique := make(map[string]normalizer.Endpoint)
@@ -209,6 +213,7 @@ func postmanRequestBody(req *postmanReq) *normalizer.RequestBody {
 		Description:  "Body definido en Postman",
 		ContentTypes: []string{contentType},
 		SchemaRef:    strings.TrimSpace(req.Body.Mode),
+		Example:      strings.TrimSpace(req.Body.Raw),
 	}
 }
 
@@ -232,6 +237,7 @@ func postmanResponses(responses []postmanResp) []normalizer.Response {
 			StatusCode:   fmt.Sprintf("%d", resp.Code),
 			Description:  strings.TrimSpace(resp.Status),
 			ContentTypes: normalizeStringList(contentTypes),
+			Example:      strings.TrimSpace(resp.Body),
 		})
 	}
 	sort.Slice(out, func(i, j int) bool {
@@ -365,4 +371,15 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func normalizeUsefulVersion(v string) string {
+	version := strings.TrimSpace(v)
+	if version == "" {
+		return ""
+	}
+	if strings.EqualFold(version, "postman") {
+		return ""
+	}
+	return version
 }

@@ -22,6 +22,12 @@ func RenderAPI(doc normalizer.APIDocument) map[string]string {
 	index.WriteString("- Version: `")
 	index.WriteString(nonEmpty(doc.Version, "n/a"))
 	index.WriteString("`\n")
+	index.WriteString("- BasePath principal: `")
+	index.WriteString(nonEmpty(doc.BasePath, "/"))
+	index.WriteString("`\n")
+	index.WriteString("- Fuente principal del contrato: `")
+	index.WriteString(nonEmpty(string(doc.ContractSource), "unknown"))
+	index.WriteString("`\n")
 	index.WriteString("- Endpoints: `")
 	index.WriteString(fmt.Sprintf("%d", len(doc.Endpoints)))
 	index.WriteString("`\n")
@@ -62,6 +68,12 @@ func RenderAPI(doc normalizer.APIDocument) map[string]string {
 	}
 	api.WriteString("Version: `")
 	api.WriteString(nonEmpty(doc.Version, "n/a"))
+	api.WriteString("`\n\n")
+	api.WriteString("BasePath principal: `")
+	api.WriteString(nonEmpty(doc.BasePath, "/"))
+	api.WriteString("`\n\n")
+	api.WriteString("Fuente principal del contrato: `")
+	api.WriteString(nonEmpty(string(doc.ContractSource), "unknown"))
 	api.WriteString("`\n\n")
 
 	api.WriteString("## Tabla de contenidos\n\n")
@@ -118,6 +130,71 @@ func RenderAPI(doc normalizer.APIDocument) map[string]string {
 			api.WriteString(strings.Join(sourceStrings(endpoint.Sources), "`, `"))
 			api.WriteString("`\n")
 		}
+		if strings.TrimSpace(string(endpoint.Confidence)) != "" {
+			api.WriteString("- Confidence: `")
+			api.WriteString(string(endpoint.Confidence))
+			api.WriteString("`\n")
+		}
+		if endpoint.Implementation != nil {
+			api.WriteString("\n### Implementacion interna\n\n")
+			api.WriteString("- Handler: `")
+			api.WriteString(nonEmpty(endpoint.Implementation.HandlerName, "-"))
+			api.WriteString("`\n")
+			api.WriteString("- Archivo: `")
+			api.WriteString(nonEmpty(endpoint.Implementation.HandlerFile, "-"))
+			api.WriteString("`\n")
+
+			api.WriteString("\n### Dependencias\n\n")
+			api.WriteString("- Base de datos: `")
+			api.WriteString(boolString(endpoint.Implementation.UsesDatabase))
+			api.WriteString("`\n")
+			if len(endpoint.Implementation.DatabaseTypes) > 0 {
+				api.WriteString("- Tipo(s) BD: `")
+				api.WriteString(strings.Join(endpoint.Implementation.DatabaseTypes, "`, `"))
+				api.WriteString("`\n")
+			}
+			if len(endpoint.Implementation.DatabaseTables) > 0 {
+				api.WriteString("- Tablas: `")
+				api.WriteString(strings.Join(endpoint.Implementation.DatabaseTables, "`, `"))
+				api.WriteString("`\n")
+			}
+			if len(endpoint.Implementation.DatabaseSPs) > 0 {
+				api.WriteString("- Stored Procedures: `")
+				api.WriteString(strings.Join(endpoint.Implementation.DatabaseSPs, "`, `"))
+				api.WriteString("`\n")
+			}
+			if len(endpoint.Implementation.DatabaseCollections) > 0 {
+				api.WriteString("- Collections: `")
+				api.WriteString(strings.Join(endpoint.Implementation.DatabaseCollections, "`, `"))
+				api.WriteString("`\n")
+			}
+			if len(endpoint.Implementation.DatabaseQueries) > 0 {
+				api.WriteString("- Queries detectadas:\n")
+				for _, query := range endpoint.Implementation.DatabaseQueries {
+					api.WriteString("  - `")
+					api.WriteString(escapeCell(query))
+					api.WriteString("`\n")
+				}
+			}
+			api.WriteString("- Mensajeria: `")
+			api.WriteString(boolString(endpoint.Implementation.UsesMessaging))
+			api.WriteString("`\n")
+
+			if len(endpoint.Implementation.ExternalAPICalls) > 0 {
+				api.WriteString("- APIs externas: `")
+				api.WriteString(strings.Join(endpoint.Implementation.ExternalAPICalls, "`, `"))
+				api.WriteString("`\n")
+			} else {
+				api.WriteString("- APIs externas: `false`\n")
+			}
+
+			api.WriteString("\n### Flujo resumido\n\n")
+			for _, step := range summarizeFlow(endpoint) {
+				api.WriteString("- ")
+				api.WriteString(step)
+				api.WriteString("\n")
+			}
+		}
 
 		if len(endpoint.Parameters) > 0 {
 			api.WriteString("\n### Parametros\n\n")
@@ -162,6 +239,11 @@ func RenderAPI(doc normalizer.APIDocument) map[string]string {
 				api.WriteString(endpoint.RequestBody.SchemaRef)
 				api.WriteString("`\n")
 			}
+			if endpoint.RequestBody.Example != "" {
+				api.WriteString("- Example: `")
+				api.WriteString(escapeCell(endpoint.RequestBody.Example))
+				api.WriteString("`\n")
+			}
 		}
 
 		if len(endpoint.Responses) > 0 {
@@ -178,6 +260,11 @@ func RenderAPI(doc normalizer.APIDocument) map[string]string {
 				api.WriteString(" | `")
 				api.WriteString(escapeCell(nonEmpty(resp.SchemaRef, "-")))
 				api.WriteString("` |\n")
+				if resp.Example != "" {
+					api.WriteString("|  | Example | `")
+					api.WriteString(escapeCell(resp.Example))
+					api.WriteString("` |  |\n")
+				}
 			}
 		}
 		api.WriteString("\n")
@@ -278,4 +365,178 @@ func joinSources(values []normalizer.SourceType) string {
 		return ""
 	}
 	return strings.Join(sourceStrings(values), ", ")
+}
+
+func summarizeFlow(endpoint normalizer.Endpoint) []string {
+	impl := endpoint.Implementation
+	if impl == nil {
+		return nil
+	}
+	steps := make([]string, 0, 10)
+	if strings.TrimSpace(impl.HandlerName) != "" {
+		steps = append(steps, "Enruta la solicitud al handler: "+impl.HandlerName)
+	} else {
+		steps = append(steps, "Resuelve el handler y valida parametros de entrada")
+	}
+
+	operation := inferOperationType(endpoint.Method, impl.DatabaseQueries)
+	entities := inferEntities(impl.DatabaseTables, impl.DatabaseCollections)
+	steps = append(steps, buildSemanticOperationStep(operation, entities))
+
+	if len(impl.ServiceCalls) > 0 {
+		steps = append(steps, "Orquesta logica de aplicacion via servicios: "+joinLimited(impl.ServiceCalls, 4))
+	}
+	if len(impl.RepositoryCalls) > 0 {
+		steps = append(steps, "Consulta repositorios: "+joinLimited(impl.RepositoryCalls, 4))
+	}
+	if impl.UsesDatabase {
+		details := make([]string, 0, 4)
+		if len(impl.DatabaseTypes) > 0 {
+			details = append(details, "tipo(s): "+strings.Join(impl.DatabaseTypes, ", "))
+		}
+		if len(impl.DatabaseTables) > 0 {
+			details = append(details, "tablas: "+joinLimited(impl.DatabaseTables, 3))
+		}
+		if len(impl.DatabaseSPs) > 0 {
+			details = append(details, "stored procedures: "+joinLimited(impl.DatabaseSPs, 2))
+		}
+		if len(impl.DatabaseCollections) > 0 {
+			details = append(details, "collections: "+joinLimited(impl.DatabaseCollections, 2))
+		}
+
+		dbStep := "Ejecuta operaciones de base de datos"
+		if len(details) > 0 {
+			dbStep += " (" + strings.Join(details, "; ") + ")"
+		}
+		steps = append(steps, dbStep)
+
+		if len(impl.DatabaseQueries) > 0 {
+			querySummary := summarizeSQLOperations(impl.DatabaseQueries)
+			steps = append(steps, "Aplica consultas SQL detectadas ("+querySummary+"): "+joinLimited(impl.DatabaseQueries, 1))
+		}
+	}
+	if len(impl.ExternalAPICalls) > 0 {
+		steps = append(steps, "Consume APIs externas: "+joinLimited(impl.ExternalAPICalls, 4))
+	}
+	if impl.UsesMessaging {
+		steps = append(steps, "Publica eventos o mensajes")
+	}
+	steps = append(steps, "Retorna respuesta al cliente")
+	return steps
+}
+
+func joinLimited(values []string, max int) string {
+	if len(values) == 0 || max <= 0 {
+		return ""
+	}
+	if len(values) <= max {
+		return strings.Join(values, ", ")
+	}
+	return strings.Join(values[:max], ", ") + fmt.Sprintf(" (+%d mas)", len(values)-max)
+}
+
+func inferOperationType(method string, queries []string) string {
+	sqlOps := extractSQLOperations(queries)
+	if len(sqlOps) > 0 {
+		return strings.Join(sqlOps, " y ")
+	}
+	switch strings.ToUpper(strings.TrimSpace(method)) {
+	case "GET", "HEAD":
+		return "consulta"
+	case "POST":
+		return "creacion"
+	case "PUT", "PATCH":
+		return "actualizacion"
+	case "DELETE":
+		return "eliminacion"
+	default:
+		return "procesamiento"
+	}
+}
+
+func extractSQLOperations(queries []string) []string {
+	ops := make([]string, 0, 4)
+	seen := make(map[string]struct{})
+	add := func(op string) {
+		if op == "" {
+			return
+		}
+		if _, ok := seen[op]; ok {
+			return
+		}
+		seen[op] = struct{}{}
+		ops = append(ops, op)
+	}
+	for _, q := range queries {
+		clean := strings.ToUpper(strings.TrimSpace(q))
+		switch {
+		case strings.HasPrefix(clean, "SELECT "):
+			add("consulta")
+		case strings.HasPrefix(clean, "INSERT "):
+			add("creacion")
+		case strings.HasPrefix(clean, "UPDATE "):
+			add("actualizacion")
+		case strings.HasPrefix(clean, "DELETE "):
+			add("eliminacion")
+		case strings.HasPrefix(clean, "EXEC ") || strings.HasPrefix(clean, "EXECUTE "):
+			add("ejecucion")
+		}
+	}
+	return ops
+}
+
+func summarizeSQLOperations(queries []string) string {
+	ops := extractSQLOperations(queries)
+	if len(ops) == 0 {
+		return fmt.Sprintf("%d query(s)", len(queries))
+	}
+	return strings.Join(ops, "/") + fmt.Sprintf(", %d query(s)", len(queries))
+}
+
+func inferEntities(tables, collections []string) []string {
+	out := make([]string, 0, len(tables)+len(collections))
+	seen := make(map[string]struct{}, len(tables)+len(collections))
+	add := func(v string) {
+		item := normalizeEntityName(v)
+		if item == "" {
+			return
+		}
+		if _, ok := seen[item]; ok {
+			return
+		}
+		seen[item] = struct{}{}
+		out = append(out, item)
+	}
+	for _, t := range tables {
+		add(t)
+	}
+	for _, c := range collections {
+		add(c)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func normalizeEntityName(value string) string {
+	v := strings.ToLower(strings.TrimSpace(value))
+	if v == "" {
+		return ""
+	}
+	if idx := strings.LastIndex(v, "."); idx >= 0 && idx+1 < len(v) {
+		v = v[idx+1:]
+	}
+	v = strings.TrimPrefix(v, "tb_")
+	v = strings.TrimPrefix(v, "tbl_")
+	return strings.TrimSpace(v)
+}
+
+func buildSemanticOperationStep(operation string, entities []string) string {
+	op := strings.TrimSpace(operation)
+	if op == "" {
+		op = "procesamiento"
+	}
+	if len(entities) == 0 {
+		return "Ejecuta una operacion de " + op + " sobre las entidades detectadas"
+	}
+	return "Ejecuta una operacion de " + op + " sobre entidades: " + joinLimited(entities, 3)
 }

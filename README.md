@@ -51,6 +51,7 @@ Notas de validacion de CLI:
 
 - `--source` debe apuntar a un archivo existente.
 - `--source-type` soporta `auto`, `openapi` y `postman`.
+- `--code` debe apuntar a la raiz de un proyecto y se usa para descubrir `swagger.json`.
 - `--output` debe ser un directorio valido y escribible.
 
 Ver ayuda global:
@@ -88,6 +89,15 @@ Probar fusion de OpenAPI + Postman en una sola salida:
 ```bash
 go run ./cmd/wiki-llm generate api \
   --source ./docs/openapi.yaml \
+  --source ./docs/ob_api-cif.postman_collection.json \
+  --output ./output/unified-cif
+```
+
+Probar descubrimiento automatico de `swagger.json` desde `--code`:
+
+```bash
+go run ./cmd/wiki-llm generate api \
+  --code /ruta/al/proyecto-api \
   --source ./docs/ob_api-cif.postman_collection.json \
   --output ./output/unified-cif
 ```
